@@ -2,6 +2,12 @@
 require('dotenv').config() // To get access of environment variables
 require('express-async-errors') // To avoid writing try/catch and throwing error using next
 
+// Extra security packages
+const helmet = require('helmet')
+const cors = require('cors')
+const xss = require('xss-clean')
+const rateLimiter = require('express-rate-limit')
+
 // Express
 const express = require('express')
 const app = express()
@@ -20,9 +26,20 @@ const jobsRouter = require('./routes/jobs')
 const notFoundMiddleware = require('./middleware/not-found')
 const errorHandlerMiddleware = require('./middleware/error-handler')
 
-// Middleware to serve JSON
+app.set('trust proxy', 1)
+app.use(
+  rateLimiter({
+    windowMs: 15 * 60 * 1000, // 15 minutes
+    max: 100 // limit each IP to 100 requests per windowMs
+  })
+)
+
+// Inbuilt middleware to serve JSON
 app.use(express.json())
-// extra packages
+
+app.use(helmet())
+app.use(cors())
+app.use(xss())
 
 // routes
 app.get('/', (req, res) => {
